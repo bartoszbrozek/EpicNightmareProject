@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Obstacle
   - Target
+  - Minion
+  - Food
   layers:
   - Default
   - TransparentFX

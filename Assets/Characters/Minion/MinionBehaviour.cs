@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MinionMovement : MonoBehaviour
+public class MinionBehaviour : MonoBehaviour
 {
     public Rigidbody rg;
     public Transform target;
@@ -11,39 +11,49 @@ public class MinionMovement : MonoBehaviour
     public float forcePower = 50f;
     public float speed = 5f;
     public int raycastMaxDistance = 5;
+
+    public int hungerLevel = 0;
+
     private Vector3 dir;
     private Vector3 leftTurn;
     private Vector3 rightTurn;
     private RaycastHit lHit;
     private RaycastHit rHit;
     private bool obstacleHit = false;
-    private float distanceToTarget;
+    private float distanceToClosestTarget = Mathf.Infinity;
     private Transform obstacle;
+    private string actualTagName = "Target";
 
     void Start()
     {
-        InvokeRepeating("UpdateTarget", 0f, 0.5f);
+        this.hungerLevel = Random.Range(0, 100);
+        InvokeRepeating("incrementHunger", 0f, 1.5f);
+        InvokeRepeating("setClosestTarget", 0f, 3f);
     }
 
 
-    void UpdateTarget()
+    void FixedUpdate()
     {
-        if (target == null)
+        if (this.distanceToClosestTarget > 4.0f)
         {
-            GameObject[] targets = GameObject.FindGameObjectsWithTag("Target");
-
-            foreach (GameObject target in targets)
-            {
-                if (target != null)
-                {
-                    this.target = target.transform;
-                    break;
-                }
-            }
+            this.goToTarget();
         }
+        else
+        {
+            if (this.target.CompareTag("Food"))
+            {
+                this.eat();
+            }
+           
+        }
+    }
 
-        this.distanceToTarget = Vector3.Distance(this.target.position, transform.position);
-        Debug.Log("Distance to Target: " + this.distanceToTarget);
+    void goToTarget()
+    {
+        if (!this.target)
+        {
+            return;
+        }
 
         leftTurn = transform.position;
         rightTurn = transform.position;
@@ -51,15 +61,6 @@ public class MinionMovement : MonoBehaviour
 
         leftTurn.x -= 1.5f;
         rightTurn.x += 1.5f;
-
-    }
-
-    void FixedUpdate()
-    {
-        if (this.distanceToTarget < 4.0f)
-        {
-            return;
-        }
 
         this.obstacleHit = false;
         if (Physics.Raycast(leftTurn, transform.forward, out lHit, raycastMaxDistance))
@@ -82,10 +83,10 @@ public class MinionMovement : MonoBehaviour
 
         if (target != null)
         {
-            Debug.Log("Obstacle Hit? " + this.obstacleHit);
+            // Debug.Log("Obstacle Hit? " + this.obstacleHit);
             if (!this.obstacleHit)
             {
-                Debug.Log("Going to Target");
+                // Debug.Log("Going to Target");
                 rotateToTarget();
                 transform.position += transform.forward * speed * Time.deltaTime;
             }
@@ -105,7 +106,6 @@ public class MinionMovement : MonoBehaviour
                 }
             }
         }
-
     }
 
     void rotateToTarget()
@@ -131,5 +131,51 @@ public class MinionMovement : MonoBehaviour
         }
 
         Gizmos.DrawWireSphere(transform.position, range);
+    }
+
+    void incrementHunger()
+    {
+        this.hungerLevel += 1;
+
+        // Set target based on hunger level
+        if (this.hungerLevel <= 50)
+        {
+            this.actualTagName = "Target";
+        }
+        else
+        {
+            this.actualTagName = "Food";
+
+            if (this.hungerLevel > 75 && this.speed < 10.0f)
+            {
+                this.speed += .1f;
+            }
+        }
+    }
+
+    void eat()
+    {
+        Food Food = this.target.GetComponent<Food>();
+        Food.foodQuantity -= .001f;
+    }
+
+    void setClosestTarget()
+    {
+        this.distanceToClosestTarget = Mathf.Infinity;
+        GameObject[] targets = GameObject.FindGameObjectsWithTag(this.actualTagName);
+
+        foreach (GameObject target in targets)
+        {
+            float distanceToTarget = Vector3.Distance(target.transform.position, transform.position);
+            Debug.Log("Target Name: " + target.name + "Dist: " + distanceToTarget);
+            if (distanceToTarget < this.distanceToClosestTarget)
+            {
+                this.distanceToClosestTarget = distanceToTarget;
+                this.target = target.transform;
+
+                Debug.DrawLine(transform.position, this.target.position);
+            }
+        }
+
     }
 }

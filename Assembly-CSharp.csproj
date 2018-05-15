@@ -51,9 +51,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Characters\Minion\MinionMovement.cs" />
+     <Compile Include="Assets\Characters\Minion\MinionBehaviour.cs" />
      <Compile Include="Assets\Characters\Player\Collision.cs" />
      <Compile Include="Assets\Characters\Player\Movement.cs" />
+     <Compile Include="Assets\Objects\Food\Food.cs" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>C:/Users/Bartek/Documents/EpicNightmareProject/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>
