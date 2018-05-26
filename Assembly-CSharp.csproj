@@ -54,7 +54,10 @@
      <Compile Include="Assets\Characters\Minion\MinionBehaviour.cs" />
      <Compile Include="Assets\Characters\Player\Collision.cs" />
      <Compile Include="Assets\Characters\Player\Movement.cs" />
+     <Compile Include="Assets\GameManager.cs" />
+     <Compile Include="Assets\Main\ObjectsCounter.cs" />
      <Compile Include="Assets\Objects\Food\Food.cs" />
+     <Compile Include="Assets\Objects\Spawners\ObjectSpawner.cs" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>C:/Users/Bartek/Documents/EpicNightmareProject/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>

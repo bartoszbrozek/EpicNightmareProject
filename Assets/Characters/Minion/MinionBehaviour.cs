@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class MinionBehaviour : MonoBehaviour
 {
@@ -12,7 +14,13 @@ public class MinionBehaviour : MonoBehaviour
     public float speed = 5f;
     public int raycastMaxDistance = 5;
 
-    public int hungerLevel = 0;
+    public float hungerLevel = 0;
+    public float eatingSpeed = .005f;
+    public float minimalHungerLevelToEat = 50f;
+    public float eatUntil = 10;
+    public float hungerDeathLevel = 100f;
+
+    public Text stats;
 
     private Vector3 dir;
     private Vector3 leftTurn;
@@ -24,9 +32,35 @@ public class MinionBehaviour : MonoBehaviour
     private Transform obstacle;
     private string actualTagName = "Target";
 
+    private bool isEating = false;
+    private float creationTime;
+
+    private string[] names = new string[] {
+        "Janusz", "Helena", "Kulfonik", "Stefan", "Inka",
+        "Adolf Hitler", "Miś Uszatek", "Kuba Rozpruwacz",
+        "Patologiczna Gruźlica", "Krul Wszehświata", "Bartuś",
+        "Jarosław Kaczyński", "Donald Tusk", "Jelito Rozpaczy",
+        "Pan Tadeusz", "Stanisław Poniatowski", "Generał Jebadło",
+        "Puszczalski Jarosław", "Henryk", "Belzebub", "Behemoth",
+        "Katarzyna Lubnauer", "Kamila Gasiuk-Pihowicz","Tadeusz Grabarek",
+        "Jerzy Meysztowicz","Witold Zembaczyński","Ryszard Petru",
+        "Joanna Scheuring-Wielgus","Joanna Schmidt","Michał Stasiński",
+        "Kononowicz"
+    };
+
+
     void Start()
     {
-        this.hungerLevel = Random.Range(0, 100);
+        GameManager.numberBorn++;
+        this.creationTime = Time.time;
+        this.name = this.names[Random.Range(0, names.Length)];
+        this.hungerLevel = Random.Range(1, 90);
+        this.speed = Random.Range(3f, 7f);
+        this.eatingSpeed = Random.Range(.002f, .01f);
+        this.minimalHungerLevelToEat = Random.Range(40f, 70f);
+        this.eatUntil = Random.Range(0f, 25f);
+        this.hungerDeathLevel = Random.Range(80f, 150f);
+
         InvokeRepeating("incrementHunger", 0f, 1.5f);
         InvokeRepeating("setClosestTarget", 0f, 3f);
     }
@@ -36,15 +70,33 @@ public class MinionBehaviour : MonoBehaviour
     {
         if (this.distanceToClosestTarget > 4.0f)
         {
+            this.isEating = false;
             this.goToTarget();
+            this.thinkAboutEating();
         }
         else
         {
-            if (this.target.CompareTag("Food"))
+            this.thinkAboutEating();
+
+            if (this.target != null && this.target.CompareTag("Food"))
             {
                 this.eat();
             }
-           
+        }
+
+        stats.text = this.name + "\nHunger: " + this.hungerLevel;
+    }
+
+    void thinkAboutEating()
+    {
+        if (this.hungerLevel > this.eatUntil && this.isEating || this.hungerLevel > this.minimalHungerLevelToEat && !this.isEating)
+        {
+            this.actualTagName = "Food";
+        }
+        else
+        {
+            this.isEating = false;
+            this.actualTagName = "Target";
         }
     }
 
@@ -54,6 +106,8 @@ public class MinionBehaviour : MonoBehaviour
         {
             return;
         }
+
+        this.isEating = false;
 
         leftTurn = transform.position;
         rightTurn = transform.position;
@@ -94,13 +148,13 @@ public class MinionBehaviour : MonoBehaviour
             {
                 if (lHit.distance > rHit.distance)
                 {
-                    Debug.Log("Turn Right");
+                    //Debug.Log("Turn Right");
                     dir.x += 10;
                     move(dir);
                 }
                 else
                 {
-                    Debug.Log("Turn Left");
+                    //Debug.Log("Turn Left");
                     dir.x -= 10;
                     move(dir);
                 }
@@ -135,28 +189,33 @@ public class MinionBehaviour : MonoBehaviour
 
     void incrementHunger()
     {
-        this.hungerLevel += 1;
-
-        // Set target based on hunger level
-        if (this.hungerLevel <= 50)
+        if (!this.isEating)
         {
-            this.actualTagName = "Target";
+            this.hungerLevel += 1;
         }
-        else
-        {
-            this.actualTagName = "Food";
 
-            if (this.hungerLevel > 75 && this.speed < 10.0f)
-            {
-                this.speed += .1f;
-            }
+        if (this.hungerLevel > this.hungerDeathLevel)
+        {
+            Destroy(this.gameObject);
+            GameManager.numberDead++;
+            Debug.Log("Oh noes! " + this.name + " is really DEAD. He lived " + (Time.time - this.creationTime) + " seconds");
         }
     }
 
     void eat()
     {
+        this.isEating = true;
         Food Food = this.target.GetComponent<Food>();
-        Food.foodQuantity -= .001f;
+
+        if (Food)
+        {
+            Food.foodQuantity -= this.eatingSpeed;
+        }
+
+        if (this.hungerLevel > 0)
+        {
+            this.hungerLevel -= (float)this.eatingSpeed * 5f;
+        }
     }
 
     void setClosestTarget()
@@ -167,7 +226,7 @@ public class MinionBehaviour : MonoBehaviour
         foreach (GameObject target in targets)
         {
             float distanceToTarget = Vector3.Distance(target.transform.position, transform.position);
-            Debug.Log("Target Name: " + target.name + "Dist: " + distanceToTarget);
+            // Debug.Log("Target Name: " + target.name + "Dist: " + distanceToTarget);
             if (distanceToTarget < this.distanceToClosestTarget)
             {
                 this.distanceToClosestTarget = distanceToTarget;

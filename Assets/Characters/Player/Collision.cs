@@ -7,7 +7,7 @@ public class Collision : MonoBehaviour {
         switch (GetComponent<Collider>().tag)
         {
             case "Obstacle":
-                Debug.Log("Obstacle HIT");
+                // Debug.Log("Obstacle HIT");
                 break;
         }
     }
